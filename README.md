@@ -1,20 +1,51 @@
-# MerchPilot — React E-commerce Admin Dashboard
+# ShopSphere – E-commerce Admin Dashboard
 
-## Run locally
-1. Install Node.js (LTS).
-2. Extract this ZIP and open the `MerchPilot` folder in VS Code.
-3. Run `npm install`.
-4. Terminal 1: `npm run server` (starts JSON Server on port 4000).
-5. Terminal 2: `npm run dev` (starts Vite; open the URL it prints, usually http://localhost:5173).
+A modern and responsive e-commerce admin dashboard built with React and Redux Toolkit.
 
-Keep both terminals running.
+## Features
 
-## Included
-- Dashboard KPIs and weekly sales chart
-- Products: add, edit, delete, search, category filter and pagination
-- Orders: search, status filter and update order status
-- Customer directory and search
-- Responsive sidebar
-- React, JavaScript, Redux Toolkit, Axios, Recharts, Lucide and CSS
+- Dashboard with sales overview and analytics
+- Product management (Add, Edit, Delete)
+- Product search, category filtering, and pagination
+- Order management and status updates
+- Customer directory with search functionality
+- Responsive layout
+- API integration using Axios
+- Global state management using Redux Toolkit
 
-This is a portfolio demo using sample JSON Server data. It does not include real authentication, payments, or a production backend.
+## Tech Stack
+
+- React.js
+- JavaScript (ES6+)
+- Redux Toolkit
+- React Router
+- Axios
+- Recharts
+- CSS
+- JSON Server
+
+## Installation and Setup
+
+1. Clone the repository:
+
+   `git clone YOUR_GITHUB_REPOSITORY_URL`
+
+2. Navigate to the project folder:
+
+   `cd ShopSphere`
+
+3. Install dependencies:
+
+   `npm install`
+
+4. Start the JSON Server:
+
+   `npm run server`
+
+5. Start the React application in another terminal:
+
+   `npm run dev`
+
+6. Open the local URL shown in your terminal.
+
+**Note:** This project uses JSON Server with sample data for demonstration. It does not include real authentication, payment integration, or a production backend.
