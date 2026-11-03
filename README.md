@@ -28,7 +28,7 @@ A modern and responsive e-commerce admin dashboard built with React and Redux To
 
 1. Clone the repository:
 
-   `git clone YOUR_GITHUB_REPOSITORY_URL`
+   `git clone https://github.com/manshibhu14-web/ShopSphere.git`
 
 2. Navigate to the project folder:
 
