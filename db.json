@@ -1,0 +1,122 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "Everyday Tote Bag",
+      "category": "Accessories",
+      "price": 1400,
+      "stock": 42,
+      "status": "Active",
+      "sku": "ACC-001"
+    },
+    {
+      "id": "2",
+      "name": "Classic Cotton Tee",
+      "category": "Clothing",
+      "price": 1000,
+      "stock": 8,
+      "status": "Active",
+      "sku": "CLO-002"
+    },
+    {
+      "id": "3",
+      "name": "Minimal Sneakers",
+      "category": "Footwear",
+      "price": 2499,
+      "stock": 0,
+      "status": "Draft",
+      "sku": "FOO-003"
+    },
+    {
+      "id": "4",
+      "name": "Everyday Backpack",
+      "category": "Accessories",
+      "price": 1899,
+      "stock": 21,
+      "status": "Active",
+      "sku": "ACC-004"
+    },
+    {
+      "id": "5",
+      "name": "Relaxed Linen Shirt",
+      "category": "Clothing",
+      "price": 1599,
+      "stock": 14,
+      "status": "Active",
+      "sku": "CLO-005"
+    }
+  ],
+  "orders": [
+    {
+      "id": "MP-1048",
+      "customer": "Aarav Sharma",
+      "email": "aarav@example.com",
+      "date": "2026-10-30",
+      "items": 2,
+      "total": 2198,
+      "status": "Processing"
+    },
+    {
+      "id": "MP-1047",
+      "customer": "Diya Mehta",
+      "email": "diya@example.com",
+      "date": "2026-10-29",
+      "items": 1,
+      "total": 2499,
+      "status": "Shipped"
+    },
+    {
+      "id": "MP-1046",
+      "customer": "Kabir Verma",
+      "email": "kabir@example.com",
+      "date": "2026-10-28",
+      "items": 3,
+      "total": 3897,
+      "status": "Shipped"
+    },
+    {
+      "id": "MP-1045",
+      "customer": "Anaya Singh",
+      "email": "anaya@example.com",
+      "date": "2026-10-27",
+      "items": 1,
+      "total": 899,
+      "status": "Delivered"
+    }
+  ],
+  "customers": [
+    {
+      "id": "1",
+      "name": "Aarav Sharma",
+      "email": "aarav@example.com",
+      "orders": 4,
+      "spent": 8290,
+      "joined": "2026-08-12"
+    },
+    {
+      "id": "2",
+      "name": "Diya Mehta",
+      "email": "diya@example.com",
+      "orders": 7,
+      "spent": 12450,
+      "joined": "2026-07-21"
+    },
+    {
+      "id": "3",
+      "name": "Kabir Verma",
+      "email": "kabir@example.com",
+      "orders": 2,
+      "spent": 3897,
+      "joined": "2026-09-04"
+    },
+    {
+      "id": "4",
+      "name": "Anaya Singh",
+      "email": "anaya@example.com",
+      "orders": 5,
+      "spent": 9675,
+      "joined": "2026-06-17"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

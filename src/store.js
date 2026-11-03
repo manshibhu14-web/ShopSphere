@@ -1,0 +1,14 @@
+import {configureStore,createSlice,createAsyncThunk} from '@reduxjs/toolkit';
+import axios from 'axios';
+const api=axios.create({baseURL:'http://localhost:4000'});
+export const loadProducts=createAsyncThunk('products/load',async()=> (await api.get('/products')).data);
+export const createProduct=createAsyncThunk('products/create',async(data)=>(await api.post('/products',data)).data);
+export const saveProduct=createAsyncThunk('products/save',async(data)=>(await api.put('/products/'+data.id,data)).data);
+export const removeProduct=createAsyncThunk('products/remove',async(id)=>{await api.delete('/products/'+id);return id;});
+export const loadOrders=createAsyncThunk('orders/load',async()=> (await api.get('/orders')).data);
+export const setOrderStatus=createAsyncThunk('orders/status',async({id,status})=>(await api.patch('/orders/'+id,{status})).data);
+export const loadCustomers=createAsyncThunk('customers/load',async()=> (await api.get('/customers')).data);
+const products=createSlice({name:'products',initialState:{items:[],loading:false},reducers:{},extraReducers:b=>b.addCase(loadProducts.pending,s=>{s.loading=true}).addCase(loadProducts.fulfilled,(s,a)=>{s.loading=false;s.items=a.payload}).addCase(createProduct.fulfilled,(s,a)=>{s.items.unshift(a.payload)}).addCase(saveProduct.fulfilled,(s,a)=>{s.items=s.items.map(x=>x.id===a.payload.id?a.payload:x)}).addCase(removeProduct.fulfilled,(s,a)=>{s.items=s.items.filter(x=>x.id!==a.payload)})});
+const orders=createSlice({name:'orders',initialState:{items:[]},reducers:{},extraReducers:b=>b.addCase(loadOrders.fulfilled,(s,a)=>{s.items=a.payload}).addCase(setOrderStatus.fulfilled,(s,a)=>{s.items=s.items.map(x=>x.id===a.payload.id?a.payload:x)})});
+const customers=createSlice({name:'customers',initialState:{items:[]},reducers:{},extraReducers:b=>b.addCase(loadCustomers.fulfilled,(s,a)=>{s.items=a.payload})});
+export const store=configureStore({reducer:{products:products.reducer,orders:orders.reducer,customers:customers.reducer}});
