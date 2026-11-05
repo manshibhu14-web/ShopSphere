@@ -1,6 +1,9 @@
 import {configureStore,createSlice,createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
-const api=axios.create({baseURL:'http://localhost:4000'});
+const api=axios.create({
+    // baseURL:'http://localhost:4000'
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000"
+});
 export const loadProducts=createAsyncThunk('products/load',async()=> (await api.get('/products')).data);
 export const createProduct=createAsyncThunk('products/create',async(data)=>(await api.post('/products',data)).data);
 export const saveProduct=createAsyncThunk('products/save',async(data)=>(await api.put('/products/'+data.id,data)).data);
