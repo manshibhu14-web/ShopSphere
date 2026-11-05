@@ -1,22 +1,970 @@
-import { useEffect, useMemo, useState } from 'react';
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Routes, Route, NavLink, Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadProducts, createProduct, saveProduct, removeProduct, loadOrders, setOrderStatus, loadCustomers } from './store';
 import { LayoutDashboard, Package, ShoppingBag, Users, Plus, Search, Pencil, Trash2, Menu, Bell, Store, ArrowUpRight, Download, X } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 
-const cash = n => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
-const sales = [{ day: 'Mon', sales: 4200 }, { day: 'Tue', sales: 6100 }, { day: 'Wed', sales: 5200 }, { day: 'Thu', sales: 7900 }, { day: 'Fri', sales: 6800 }, { day: 'Sat', sales: 9400 }, { day: 'Sun', sales: 8300 }];
-function Badge({ value }) { return <span className={'badge ' + value.toLowerCase()}>{value}</span> }
-function Shell() {
-    const [menu, setMenu] = useState(false); const loc = useLocation(); const links = [['/', 'Overview', LayoutDashboard], ['/products', 'Products', Package], ['/orders', 'Orders', ShoppingBag], ['/customers', 'Customers', Users]];
-    return <div className='shell'><aside className={menu ? 'sidebar show' : 'sidebar'}><div className='brand'><span className='brand-icon'><Store size={18} /></span>Shop<span>Sphere</span></div><small className='side-label'>WORKSPACE</small><nav>{links.map(([to, label, Icon]) => <NavLink end={to === '/'} to={to} onClick={() => setMenu(false)} className={({ isActive }) => isActive ? 'nav active' : 'nav'} key={to}><Icon size={18} />{label}</NavLink>)}</nav><div className='store-user'><div className='avatar'>M</div><div><b>My Store</b><small>Free plan</small></div><i /></div></aside><div className='main'><header className='topbar'><button className='menu-btn' onClick={() => setMenu(!menu)}><Menu /></button><div className='crumb'>Workspace <span>/</span> {links.find(x => x[0] === loc.pathname)?.[1] || 'Overview'}</div><div className='top-right'><Bell size={18} /><div className='user-avatar'>MG</div><div className='user-name'><b>Manshi Gupta</b><small>Administrator</small></div></div></header><main className='content'><Routes><Route path='/' element={<Dashboard />} /><Route path='/products' element={<Products />} /><Route path='/orders' element={<Orders />} /><Route path='/customers' element={<Customers />} /></Routes></main></div></div>
+// ========================================
+// 1. HELPER FUNCTIONS
+// ========================================
+
+// Format number into Indian currency
+const cash = (n) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(n || 0);
+
+// Weekly sales chart data
+const sales = [
+  { day: "Mon", sales: 4200 },
+  { day: "Tue", sales: 6100 },
+  { day: "Wed", sales: 5200 },
+  { day: "Thu", sales: 7900 },
+  { day: "Fri", sales: 6800 },
+  { day: "Sat", sales: 9400 },
+  { day: "Sun", sales: 8300 },
+];
+
+// Reusable badge component
+function Badge({ value }) {
+  return (
+    <span className={"badge " + value.toLowerCase()}>
+      {value}
+    </span>
+  );
 }
-function Heading({ eyebrow, title, desc, action }) { return <div className='heading'><div><small className='eyebrow'>{eyebrow}</small><h1>{title}</h1><p>{desc}</p></div>{action}</div> }
-function Dashboard() { const dispatch = useDispatch(); const p = useSelector(s => s.products.items), o = useSelector(s => s.orders.items), c = useSelector(s => s.customers.items); useEffect(() => { dispatch(loadProducts()); dispatch(loadOrders()); dispatch(loadCustomers()) }, [dispatch]); const revenue = o.filter(x => x.status !== 'Cancelled').reduce((a, x) => a + Number(x.total), 0); return <><Heading eyebrow='STORE OVERVIEW' title='Good morning, Manshi ✦' desc="Here's what's happening with your store today." action={<button className='secondary' onClick={() => window.print()}><Download size={15} /> Export report</button>} /><div className='stats'>{[['Total revenue', cash(revenue), '↗ 12.8%'], ['Total orders', o.length, '↗ 8.2%'], ['Products', p.length, '↗ 4.5%'], ['Customers', c.length, '↗ 10.1%']].map(([t, v, ch]) => <article className='stat' key={t}><div>{t}<span>{t === 'Total revenue' ? '₹' : t === 'Total orders' ? '↗' : t === 'Products' ? '□' : '♙'}</span></div><strong>{v}</strong><small>{ch} <i>vs. last month</i></small></article>)}</div><div className='dash-grid'><section className='panel'><div className='panel-head'><div><h2>Sales overview</h2><p>Revenue performance this week</p></div><span className='pill'>This week⌄</span></div><div className='chart-total'>{cash(revenue)} <small>↗ 12.8% vs last month</small></div><div className='chart'><ResponsiveContainer width='100%' height='100%'><AreaChart data={sales}><defs><linearGradient id='fill' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stopColor='#9bbd76' stopOpacity={.35} /><stop offset='100%' stopColor='#9bbd76' stopOpacity={0} /></linearGradient></defs><CartesianGrid stroke='#edf0e9' vertical={false} /><XAxis dataKey='day' tickLine={false} axisLine={false} /><YAxis tickLine={false} axisLine={false} /><Tooltip formatter={cash} /><Area dataKey='sales' stroke='#779957' fill='url(#fill)' strokeWidth={2.5} /></AreaChart></ResponsiveContainer></div></section><section className='panel'><div className='panel-head'><div><h2>Inventory snapshot</h2><p>Current stock levels</p></div><span className='pill'>Live</span></div><strong className='inventory-total'>{p.length}</strong><p className='muted'>total products</p>{[['In stock', p.filter(x => x.stock > 5).length], ['Low stock', p.filter(x => x.stock > 0 && x.stock <= 5).length], ['Out of stock', p.filter(x => x.stock === 0).length]].map(([x, n], i) => <div className='inventory-row' key={x}><span><i className={'dot d' + i} />{x}</span><b>{n}</b></div>)}<p className='hint'>Keep an eye on low-stock products to avoid missed sales.</p></section></div><section className='panel'><div className='panel-head'><div><h2>Recent orders</h2><p>A quick look at your latest orders</p></div><Link className='text-link' to='/orders'>View all orders ↗</Link></div><OrderTable rows={o.slice(0, 5)} /></section></> }
-function OrderTable({ rows, showStatus = false, onStatus }) { return <div className='table-wrap'><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>DATE</th><th>ITEMS</th><th>AMOUNT</th><th>STATUS</th>{showStatus && <th>UPDATE</th>}</tr></thead><tbody>{rows.map(x => <tr key={x.id}><td><b>{x.id}</b></td><td>{x.customer}{showStatus && <small className='sub'>{x.email}</small>}</td><td>{x.date}</td><td>{x.items}</td><td><b>{cash(x.total)}</b></td><td><Badge value={x.status} /></td>{showStatus && <td><select value={x.status} onChange={e => onStatus(x.id, e.target.value)}><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></td>}</tr>)}{!rows.length && <tr><td colSpan='7' className='empty'>No records found.</td></tr>}</tbody></table></div> }
-function Products() { const dispatch = useDispatch(); const items = useSelector(s => s.products.items); const [q, setQ] = useState(''), [cat, setCat] = useState('All'), [page, setPage] = useState(1), [modal, setModal] = useState(false), [edit, setEdit] = useState(null); const blank = { name: '', category: 'Clothing', price: '', stock: '', status: 'Active', sku: '' }; const [form, setForm] = useState(blank); useEffect(() => { dispatch(loadProducts()) }, [dispatch]); const filtered = useMemo(() => items.filter(x => (x.name + ' ' + x.sku).toLowerCase().includes(q.toLowerCase()) && (cat === 'All' || x.category === cat)), [items, q, cat]); const shown = filtered.slice((page - 1) * 5, page * 5); const open = (x) => { setEdit(x || null); setForm(x ? { ...x, price: String(x.price), stock: String(x.stock) } : blank); setModal(true) }; const submit = async e => { e.preventDefault(); const data = { ...form, price: Number(form.price), stock: Number(form.stock) }; if (edit) await dispatch(saveProduct({ ...data, id: edit.id })); else await dispatch(createProduct(data)); setModal(false) }; return <><Heading eyebrow='CATALOGUE' title='Products' desc="Manage your store's product catalogue." action={<button className='primary' onClick={() => open(null)}><Plus size={16} /> Add product</button>} /><section className='panel listing'><div className='toolbar'><div className='search'><Search size={16} /><input value={q} onChange={e => { setQ(e.target.value); setPage(1) }} placeholder='Search products or SKU...' /></div><select value={cat} onChange={e => { setCat(e.target.value); setPage(1) }}><option>All</option><option>Clothing</option><option>Accessories</option><option>Footwear</option></select></div><div className='table-wrap'><table><thead><tr><th>PRODUCT</th><th>SKU</th><th>CATEGORY</th><th>PRICE</th><th>STOCK</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>{shown.map(x => <tr key={x.id}><td><b>{x.name}</b></td><td>{x.sku}</td><td>{x.category}</td><td><b>{cash(x.price)}</b></td><td className={x.stock <= 5 ? 'low' : ''}>{x.stock}</td><td><Badge value={x.status} /></td><td><button className='icon-action' onClick={() => open(x)}><Pencil size={15} /></button><button className='icon-action danger' onClick={() => confirm('Delete this product?') && dispatch(removeProduct(x.id))}><Trash2 size={15} /></button></td></tr>)}{!shown.length && <tr><td colSpan='7' className='empty'>No products found.</td></tr>}</tbody></table></div><div className='pagination'><span>Showing {filtered.length ? ((page - 1) * 5 + 1) : 0}–{Math.min(page * 5, filtered.length)} of {filtered.length} products</span><div><button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</button><span>{page} / {Math.max(1, Math.ceil(filtered.length / 5))}</span><button disabled={page >= Math.ceil(filtered.length / 5)} onClick={() => setPage(page + 1)}>Next</button></div></div></section>{modal && <div className='overlay'><form className='modal' onSubmit={submit}><div className='modal-head'><div><h2>{edit ? 'Edit product' : 'Add product'}</h2><p>Enter the product details below.</p></div><button type='button' className='close' onClick={() => setModal(false)}><X /></button></div><label>Product name<input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label><div className='form-row'><label>Category<select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option>Clothing</option><option>Accessories</option><option>Footwear</option></select></label><label>SKU<input required value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} /></label></div><div className='form-row'><label>Price (₹)<input required min='0' type='number' value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} /></label><label>Stock<input required min='0' type='number' value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} /></label></div><label>Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>Active</option><option>Draft</option></select></label><div className='modal-actions'><button type='button' className='secondary' onClick={() => setModal(false)}>Cancel</button><button className='primary'>{edit ? 'Save changes' : 'Add product'}</button></div></form></div>}</> }
-function Orders() { const dispatch = useDispatch(); const items = useSelector(s => s.orders.items); const [q, setQ] = useState(''), [filter, setFilter] = useState('All'); useEffect(() => { dispatch(loadOrders()) }, [dispatch]); const rows = items.filter(x => (x.id + ' ' + x.customer + ' ' + x.email).toLowerCase().includes(q.toLowerCase()) && (filter === 'All' || x.status === filter)); return <><Heading eyebrow='SALES' title='Orders' desc='Track and manage customer orders.' /><section className='panel listing'><div className='toolbar'><div className='search'><Search size={16} /><input value={q} onChange={e => setQ(e.target.value)} placeholder='Search order or customer...' /></div><select value={filter} onChange={e => setFilter(e.target.value)}><option>All</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></div><OrderTable rows={rows} showStatus onStatus={(id, status) => dispatch(setOrderStatus({ id, status }))} /><div className='pagination'>{rows.length} orders</div></section></> }
-function Customers() { const dispatch = useDispatch(); const items = useSelector(s => s.customers.items); const [q, setQ] = useState(''); useEffect(() => { dispatch(loadCustomers()) }, [dispatch]); const rows = items.filter(x => (x.name + ' ' + x.email).toLowerCase().includes(q.toLowerCase())); return <><Heading eyebrow='RELATIONSHIPS' title='Customers' desc='Get to know the people shopping with you.' /><section className='panel listing'><div className='toolbar'><div className='search'><Search size={16} /><input value={q} onChange={e => setQ(e.target.value)} placeholder='Search customers...' /></div><span className='muted'>{items.length} customers</span></div><div className='table-wrap'><table><thead><tr><th>CUSTOMER</th><th>EMAIL</th><th>ORDERS</th><th>TOTAL SPENT</th><th>JOINED</th></tr></thead><tbody>{rows.map(x => <tr key={x.id}><td><b>{x.name}</b></td><td>{x.email}</td><td>{x.orders}</td><td><b>{cash(x.spent)}</b></td><td>{x.joined}</td></tr>)}</tbody></table></div></section></> }
-export default function App() { return <Shell /> }
+
+// ========================================
+// 2. MAIN LAYOUT - SIDEBAR AND TOPBAR
+// ========================================
+
+function Shell() {
+  const [menu, setMenu] = useState(false);
+
+  const loc = useLocation();
+
+  const links = [
+    ["/", "Overview", LayoutDashboard],
+    ["/products", "Products", Package],
+    ["/orders", "Orders", ShoppingBag],
+    ["/customers", "Customers", Users],
+  ];
+
+  return (
+    <div className="shell">
+
+      {/* Sidebar */}
+      <aside className={menu ? "sidebar show" : "sidebar"}>
+
+        <div className="brand">
+          <span className="brand-icon">
+            <Store size={18} />
+          </span>
+          Shop<span>Sphere</span>
+        </div>
+
+        <small className="side-label">WORKSPACE</small>
+
+        <nav>
+          {links.map(([to, label, Icon]) => (
+            <NavLink
+              end={to === "/"}
+              to={to}
+              onClick={() => setMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "nav active" : "nav"
+              }
+              key={to}
+            >
+              <Icon size={18} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Store user information */}
+        <div className="store-user">
+          <div className="avatar">M</div>
+
+          <div>
+            <b>My Store</b>
+            <small>Free plan</small>
+          </div>
+
+          <i />
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="main">
+
+        {/* Top navigation bar */}
+        <header className="topbar">
+
+          <button
+            className="menu-btn"
+            onClick={() => setMenu(!menu)}
+          >
+            <Menu />
+          </button>
+
+          <div className="crumb">
+            Workspace
+            <span>/</span>
+            {links.find((x) => x[0] === loc.pathname)?.[1] || "Overview"}
+          </div>
+
+          <div className="top-right">
+            <Bell size={18} />
+
+            <div className="user-avatar">MG</div>
+
+            <div className="user-name">
+              <b>Manshi Gupta</b>
+              <small>Administrator</small>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="content">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/customers" element={<Customers />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// ========================================
+// 3. REUSABLE PAGE HEADING
+// ========================================
+
+function Heading({ eyebrow, title, desc, action }) {
+  return (
+    <div className="heading">
+      <div>
+        <small className="eyebrow">{eyebrow}</small>
+        <h1>{title}</h1>
+        <p>{desc}</p>
+      </div>
+
+      {action}
+    </div>
+  );
+}
+
+// ========================================
+// 4. DASHBOARD PAGE
+// ========================================
+
+function Dashboard() {
+  const dispatch = useDispatch();
+
+  const p = useSelector((s) => s.products.items);
+  const o = useSelector((s) => s.orders.items);
+  const c = useSelector((s) => s.customers.items);
+
+  // Load dashboard data from API
+  useEffect(() => {
+    dispatch(loadProducts());
+    dispatch(loadOrders());
+    dispatch(loadCustomers());
+  }, [dispatch]);
+
+  // Calculate total revenue
+  const revenue = o
+    .filter((x) => x.status !== "Cancelled")
+    .reduce((a, x) => a + Number(x.total), 0);
+
+  return (
+    <>
+      <Heading
+        eyebrow="STORE OVERVIEW"
+        title="Good morning, Manshi ✦"
+        desc="Here's what's happening with your store today."
+        action={
+          <button
+            className="secondary"
+            onClick={() => window.print()}
+          >
+            <Download size={15} />
+            Export report
+          </button>
+        }
+      />
+
+      {/* Statistics cards */}
+      <div className="stats">
+        {[
+          ["Total revenue", cash(revenue), "↗ 12.8%"],
+          ["Total orders", o.length, "↗ 8.2%"],
+          ["Products", p.length, "↗ 4.5%"],
+          ["Customers", c.length, "↗ 10.1%"],
+        ].map(([t, v, ch]) => (
+          <article className="stat" key={t}>
+            <div>
+              {t}
+
+              <span>
+                {t === "Total revenue"
+                  ? "₹"
+                  : t === "Total orders"
+                    ? "↗"
+                    : t === "Products"
+                      ? "□"
+                      : "♙"}
+              </span>
+            </div>
+
+            <strong>{v}</strong>
+
+            <small>
+              {ch} <i>vs. last month</i>
+            </small>
+          </article>
+        ))}
+      </div>
+
+      {/* Dashboard charts and inventory */}
+      <div className="dash-grid">
+
+        {/* Sales chart */}
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Sales overview</h2>
+              <p>Revenue performance this week</p>
+            </div>
+
+            <span className="pill">This week⌄</span>
+          </div>
+
+          <div className="chart-total">
+            {cash(revenue)}
+            <small>↗ 12.8% vs last month</small>
+          </div>
+
+          <div className="chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sales}>
+                <defs>
+                  <linearGradient
+                    id="fill"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="#9bbd76"
+                      stopOpacity={0.35}
+                    />
+
+                    <stop
+                      offset="100%"
+                      stopColor="#9bbd76"
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid
+                  stroke="#edf0e9"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="day"
+                  tickLine={false}
+                  axisLine={false}
+                />
+
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                />
+
+                <Tooltip formatter={cash} />
+
+                <Area
+                  dataKey="sales"
+                  stroke="#779957"
+                  fill="url(#fill)"
+                  strokeWidth={2.5}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* Inventory summary */}
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Inventory snapshot</h2>
+              <p>Current stock levels</p>
+            </div>
+
+            <span className="pill">Live</span>
+          </div>
+
+          <strong className="inventory-total">
+            {p.length}
+          </strong>
+
+          <p className="muted">total products</p>
+
+          {[
+            ["In stock", p.filter((x) => x.stock > 5).length],
+            ["Low stock", p.filter((x) => x.stock > 0 && x.stock <= 5).length],
+            ["Out of stock", p.filter((x) => x.stock === 0).length],
+          ].map(([x, n], i) => (
+            <div className="inventory-row" key={x}>
+              <span>
+                <i className={"dot d" + i} />
+                {x}
+              </span>
+
+              <b>{n}</b>
+            </div>
+          ))}
+
+          <p className="hint">
+            Keep an eye on low-stock products to avoid missed sales.
+          </p>
+        </section>
+      </div>
+
+      {/* Recent orders */}
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <h2>Recent orders</h2>
+            <p>A quick look at your latest orders</p>
+          </div>
+
+          <Link className="text-link" to="/orders">
+            View all orders ↗
+          </Link>
+        </div>
+
+        <OrderTable rows={o.slice(0, 5)} />
+      </section>
+    </>
+  );
+}
+
+// ========================================
+// 5. REUSABLE ORDERS TABLE
+// ========================================
+
+function OrderTable({
+  rows,
+  showStatus = false,
+  onStatus,
+}) {
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ORDER</th>
+            <th>CUSTOMER</th>
+            <th>DATE</th>
+            <th>ITEMS</th>
+            <th>AMOUNT</th>
+            <th>STATUS</th>
+
+            {showStatus && <th>UPDATE</th>}
+          </tr>
+        </thead>
+
+        <tbody>
+          {rows.map((x) => (
+            <tr key={x.id}>
+              <td>
+                <b>{x.id}</b>
+              </td>
+
+              <td>
+                {x.customer}
+
+                {showStatus && (
+                  <small className="sub">{x.email}</small>
+                )}
+              </td>
+
+              <td>{x.date}</td>
+              <td>{x.items}</td>
+
+              <td>
+                <b>{cash(x.total)}</b>
+              </td>
+
+              <td>
+                <Badge value={x.status} />
+              </td>
+
+              {showStatus && (
+                <td>
+                  <select
+                    value={x.status}
+                    onChange={(e) =>
+                      onStatus(x.id, e.target.value)
+                    }
+                  >
+                    <option>Processing</option>
+                    <option>Shipped</option>
+                    <option>Delivered</option>
+                    <option>Cancelled</option>
+                  </select>
+                </td>
+              )}
+            </tr>
+          ))}
+
+          {!rows.length && (
+            <tr>
+              <td colSpan="7" className="empty">
+                No records found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ========================================
+// 6. PRODUCTS PAGE - CRUD OPERATIONS
+// ========================================
+
+function Products() {
+  const dispatch = useDispatch();
+
+  const items = useSelector((s) => s.products.items);
+
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("All");
+  const [page, setPage] = useState(1);
+  const [modal, setModal] = useState(false);
+  const [edit, setEdit] = useState(null);
+
+  const blank = {
+    name: "",
+    category: "Clothing",
+    price: "",
+    stock: "",
+    status: "Active",
+    sku: "",
+  };
+
+  const [form, setForm] = useState(blank);
+
+  // Load products
+  useEffect(() => {
+    dispatch(loadProducts());
+  }, [dispatch]);
+
+  // Search and filter products
+  const filtered = useMemo(
+    () =>
+      items.filter(
+        (x) =>
+          (x.name + " " + x.sku)
+            .toLowerCase()
+            .includes(q.toLowerCase()) &&
+          (cat === "All" || x.category === cat)
+      ),
+    [items, q, cat]
+  );
+
+  // Pagination
+  const shown = filtered.slice(
+    (page - 1) * 5,
+    page * 5
+  );
+
+  // Open Add/Edit modal
+  const open = (x) => {
+    setEdit(x || null);
+
+    setForm(
+      x
+        ? {
+            ...x,
+            price: String(x.price),
+            stock: String(x.stock),
+          }
+        : blank
+    );
+
+    setModal(true);
+  };
+
+  // Save product
+  const submit = async (e) => {
+    e.preventDefault();
+
+    const data = {
+      ...form,
+      price: Number(form.price),
+      stock: Number(form.stock),
+    };
+
+    if (edit) {
+      await dispatch(saveProduct({ ...data, id: edit.id }));
+    } else {
+      await dispatch(createProduct(data));
+    }
+
+    setModal(false);
+  };
+
+  return (
+    <>
+      <Heading
+        eyebrow="CATALOGUE"
+        title="Products"
+        desc="Manage your store's product catalogue."
+        action={
+          <button
+            className="primary"
+            onClick={() => open(null)}
+          >
+            <Plus size={16} />
+            Add product
+          </button>
+        }
+      />
+
+      <section className="panel listing">
+
+        {/* Search and category filter */}
+        <div className="toolbar">
+          <div className="search">
+            <Search size={16} />
+
+            <input
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search products or SKU..."
+            />
+          </div>
+
+          <select
+            value={cat}
+            onChange={(e) => {
+              setCat(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option>All</option>
+            <option>Clothing</option>
+            <option>Accessories</option>
+            <option>Footwear</option>
+          </select>
+        </div>
+
+        {/* Products table */}
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>PRODUCT</th>
+                <th>SKU</th>
+                <th>CATEGORY</th>
+                <th>PRICE</th>
+                <th>STOCK</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {shown.map((x) => (
+                <tr key={x.id}>
+                  <td>
+                    <b>{x.name}</b>
+                  </td>
+
+                  <td>{x.sku}</td>
+                  <td>{x.category}</td>
+
+                  <td>
+                    <b>{cash(x.price)}</b>
+                  </td>
+
+                  <td className={x.stock <= 5 ? "low" : ""}>
+                    {x.stock}
+                  </td>
+
+                  <td>
+                    <Badge value={x.status} />
+                  </td>
+
+                  <td>
+                    <button
+                      className="icon-action"
+                      onClick={() => open(x)}
+                    >
+                      <Pencil size={15} />
+                    </button>
+
+                    <button
+                      className="icon-action danger"
+                      onClick={() =>
+                        confirm("Delete this product?") &&
+                        dispatch(removeProduct(x.id))
+                      }
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {!shown.length && (
+                <tr>
+                  <td colSpan="7" className="empty">
+                    No products found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="pagination">
+          <span>
+            Showing{" "}
+            {filtered.length ? (page - 1) * 5 + 1 : 0}
+            –{Math.min(page * 5, filtered.length)} of{" "}
+            {filtered.length} products
+          </span>
+
+          <div>
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Previous
+            </button>
+
+            <span>
+              {page} / {Math.max(1, Math.ceil(filtered.length / 5))}
+            </span>
+
+            <button
+              disabled={page >= Math.ceil(filtered.length / 5)}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Add/Edit product modal */}
+      {modal && (
+        <div className="overlay">
+          <form className="modal" onSubmit={submit}>
+            <div className="modal-head">
+              <div>
+                <h2>{edit ? "Edit product" : "Add product"}</h2>
+                <p>Enter the product details below.</p>
+              </div>
+
+              <button
+                type="button"
+                className="close"
+                onClick={() => setModal(false)}
+              >
+                <X />
+              </button>
+            </div>
+
+            <label>
+              Product name
+              <input
+                required
+                value={form.name}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value })
+                }
+              />
+            </label>
+
+            <div className="form-row">
+              <label>
+                Category
+                <select
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                >
+                  <option>Clothing</option>
+                  <option>Accessories</option>
+                  <option>Footwear</option>
+                </select>
+              </label>
+
+              <label>
+                SKU
+                <input
+                  required
+                  value={form.sku}
+                  onChange={(e) =>
+                    setForm({ ...form, sku: e.target.value })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Price (₹)
+                <input
+                  required
+                  min="0"
+                  type="number"
+                  value={form.price}
+                  onChange={(e) =>
+                    setForm({ ...form, price: e.target.value })
+                  }
+                />
+              </label>
+
+              <label>
+                Stock
+                <input
+                  required
+                  min="0"
+                  type="number"
+                  value={form.stock}
+                  onChange={(e) =>
+                    setForm({ ...form, stock: e.target.value })
+                  }
+                />
+              </label>
+            </div>
+
+            <label>
+              Status
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm({ ...form, status: e.target.value })
+                }
+              >
+                <option>Active</option>
+                <option>Draft</option>
+              </select>
+            </label>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button className="primary">
+                {edit ? "Save changes" : "Add product"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ========================================
+// 7. ORDERS PAGE
+// ========================================
+
+function Orders() {
+  const dispatch = useDispatch();
+
+  const items = useSelector((s) => s.orders.items);
+
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("All");
+
+  // Load orders
+  useEffect(() => {
+    dispatch(loadOrders());
+  }, [dispatch]);
+
+  // Search and filter orders
+  const rows = items.filter(
+    (x) =>
+      (x.id + " " + x.customer + " " + x.email)
+        .toLowerCase()
+        .includes(q.toLowerCase()) &&
+      (filter === "All" || x.status === filter)
+  );
+
+  return (
+    <>
+      <Heading
+        eyebrow="SALES"
+        title="Orders"
+        desc="Track and manage customer orders."
+      />
+
+      <section className="panel listing">
+
+        {/* Search and status filter */}
+        <div className="toolbar">
+          <div className="search">
+            <Search size={16} />
+
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search order or customer..."
+            />
+          </div>
+
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option>All</option>
+            <option>Processing</option>
+            <option>Shipped</option>
+            <option>Delivered</option>
+            <option>Cancelled</option>
+          </select>
+        </div>
+
+        <OrderTable
+          rows={rows}
+          showStatus
+          onStatus={(id, status) =>
+            dispatch(setOrderStatus({ id, status }))
+          }
+        />
+
+        <div className="pagination">
+          {rows.length} orders
+        </div>
+      </section>
+    </>
+  );
+}
+
+// ========================================
+// 8. CUSTOMERS PAGE
+// ========================================
+
+function Customers() {
+  const dispatch = useDispatch();
+
+  const items = useSelector((s) => s.customers.items);
+
+  const [q, setQ] = useState("");
+
+  // Load customers
+  useEffect(() => {
+    dispatch(loadCustomers());
+  }, [dispatch]);
+
+  // Search customers
+  const rows = items.filter((x) =>
+    (x.name + " " + x.email)
+      .toLowerCase()
+      .includes(q.toLowerCase())
+  );
+
+  return (
+    <>
+      <Heading
+        eyebrow="RELATIONSHIPS"
+        title="Customers"
+        desc="Get to know the people shopping with you."
+      />
+
+      <section className="panel listing">
+
+        {/* Customer search */}
+        <div className="toolbar">
+          <div className="search">
+            <Search size={16} />
+
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search customers..."
+            />
+          </div>
+
+          <span className="muted">
+            {items.length} customers
+          </span>
+        </div>
+
+        {/* Customers table */}
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>CUSTOMER</th>
+                <th>EMAIL</th>
+                <th>ORDERS</th>
+                <th>TOTAL SPENT</th>
+                <th>JOINED</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {rows.map((x) => (
+                <tr key={x.id}>
+                  <td>
+                    <b>{x.name}</b>
+                  </td>
+
+                  <td>{x.email}</td>
+                  <td>{x.orders}</td>
+
+                  <td>
+                    <b>{cash(x.spent)}</b>
+                  </td>
+
+                  <td>{x.joined}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  );
+}
+
+// ========================================
+// 9. MAIN APP COMPONENT
+// ========================================
+
+export default function App() {
+  return <Shell />;
+}

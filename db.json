@@ -5,7 +5,7 @@
       "name": "Everyday Tote Bag",
       "category": "Accessories",
       "price": 1400,
-      "stock": 42,
+      "stock": 45,
       "status": "Active",
       "sku": "ACC-001"
     },
@@ -14,7 +14,7 @@
       "name": "Classic Cotton Tee",
       "category": "Clothing",
       "price": 1000,
-      "stock": 8,
+      "stock": 10,
       "status": "Active",
       "sku": "CLO-002"
     },
@@ -23,7 +23,7 @@
       "name": "Minimal Sneakers",
       "category": "Footwear",
       "price": 2499,
-      "stock": 0,
+      "stock": 20,
       "status": "Draft",
       "sku": "FOO-003"
     },
